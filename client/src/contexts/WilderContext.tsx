@@ -1,12 +1,6 @@
-import {
-  createContext,
-  PropsWithChildren,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, PropsWithChildren, useContext } from "react";
+import { gql, useQuery } from "@apollo/client";
 import IWilder from "../interface/IWilder";
-import { getWilder } from "../wildersData";
 
 interface WildersContextProps {
   wildersData: IWilder[];
@@ -18,19 +12,28 @@ export const WildersContext = createContext<WildersContextProps>({
   fetchData: () => {},
 });
 
+const GET_WILDERS = gql`
+  query GetAllWilders {
+    getAllWilders {
+      id
+      name
+      city
+      skills {
+        id
+        name
+      }
+    }
+  }
+`;
+
 export const WildersProvider: React.FC<PropsWithChildren> = ({
   children,
 }: PropsWithChildren) => {
-  const [wildersData, setWildersData] = useState<IWilder[]>([]);
-
-  const fetchData = async (): Promise<void> => {
-    const result = await getWilder();
-    setWildersData(result.data);
+  const { data, refetch } = useQuery(GET_WILDERS);
+  const wildersData = data?.getAllWilders || [];
+  const fetchData = async () => {
+    await refetch();
   };
-
-  useEffect(() => {
-    void fetchData();
-  }, []);
 
   return (
     <WildersContext.Provider value={{ wildersData, fetchData }}>
@@ -39,6 +42,4 @@ export const WildersProvider: React.FC<PropsWithChildren> = ({
   );
 };
 
-export const useWilders = () => {
-  return useContext(WildersContext);
-};
+export const useWilders = () => useContext(WildersContext);

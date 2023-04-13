@@ -1,8 +1,14 @@
 import blank_profile from "../../assets/blank_profile.png";
 import "./WilderCard.css";
-import { deleteWilder } from "../../wildersData";
 import IWilder from "../../interface/IWilder";
 import { useWilders } from "../../contexts/WilderContext";
+import { useMutation, gql } from "@apollo/client";
+
+const DELETE_WILDER = gql`
+  mutation DeleteWilder($deleteWilderId: Float!) {
+    deleteWilder(id: $deleteWilderId)
+  }
+`;
 
 interface WilderData {
   wilder: IWilder;
@@ -10,14 +16,22 @@ interface WilderData {
 
 const WilderCard: React.FC<WilderData> = ({ wilder }: WilderData) => {
   const { fetchData } = useWilders();
-  const deleteData = async (): Promise<void> => {
-    await deleteWilder(wilder.id);
-    void fetchData();
+  const [deleteWilder] = useMutation(DELETE_WILDER);
+
+  const btnDelete = async () => {
+    await deleteWilder({
+      variables: { deleteWilderId: wilder.id },
+    });
+    fetchData();
   };
 
   return (
     <article className="card">
-      <img src={blank_profile} alt={`${wilder.name} Profile`} />
+      <img
+        draggable="false"
+        src={blank_profile}
+        alt={`${wilder.name} Profile`}
+      />
       <h3>{wilder.name}</h3>
       <h4>{wilder.city}</h4>
       <p>
@@ -29,10 +43,7 @@ const WilderCard: React.FC<WilderData> = ({ wilder }: WilderData) => {
       <h4>Wild Skills</h4>
       <ul className="skills">
         {wilder.skills.map((skill, index) => (
-          <li key={index}>
-            {skill.name}
-            {/* <span className="votes">{skill.votes}</span> */}
-          </li>
+          <li key={index}>{skill.name}</li>
         ))}
       </ul>
       <h4>Actions</h4>
@@ -40,7 +51,7 @@ const WilderCard: React.FC<WilderData> = ({ wilder }: WilderData) => {
         title={`Delete ${wilder.name}`}
         className="btn"
         onClick={() => {
-          void deleteData();
+          void btnDelete();
         }}
       >
         Delete
